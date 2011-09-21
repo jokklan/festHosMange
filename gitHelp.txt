@@ -9,3 +9,15 @@ git push	//Push versionen til github.com
 git fetch	//Hent nye versioner fra github.com
 ´
 git rebase origin/master 	//Restrukturer versioner så der ikke opstår modsætninger/fejl
+
+
+hent fra github:
+git fetch
+git rebase origin/master
+
+
+læg op på github:
+git add .
+git add -A
+git commit -m "COMMENT"
+git push
