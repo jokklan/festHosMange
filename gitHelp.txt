@@ -1,0 +1,11 @@
+git add .	//Tilføj alt der er tilføjet til versionen
+git add -A	//Tilføj alt der er slettet til versionen
+git add # 	//Tilføj bestemt fil til versionen
+
+git commit -m "#" 	//Commit versionen og skriv kommentar
+
+git push	//Push versionen til github.com
+
+git fetch	//Hent nye versioner fra github.com
+´
+git rebase origin/master 	//Restrukturer versioner så der ikke opstår modsætninger/fejl
