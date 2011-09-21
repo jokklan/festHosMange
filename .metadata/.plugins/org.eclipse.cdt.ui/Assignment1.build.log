@@ -1,0 +1,8 @@
+
+**** Build of configuration Debug for project Assignment1 ****
+
+**** Internal Builder is used for build               ****
+gcc -O0 -g3 -Wall -c -fmessage-length=0 -o bmp.o ..\bmp.c
+gcc -o Assignment1.exe main.o lcd.o ccd.o bmp.o
+Build complete for project Assignment1
+Time consumed: 780  ms.  

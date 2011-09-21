@@ -48,6 +48,17 @@ typedef struct {
 	WORD		BiClrImportant;		/* number of important colors 	  */
 } BITMAPINFOHEADER;
 
+typedef struct {
+	BYTE rgbBlue;
+	BYTE rgbGreen;
+	BYTE rgbRed;
+	BYTE rgbReserved;
+} RGBQUAD;
+
+typedef struct {
+	BITMAPINFOHEADER bmiHeader;
+	RGBQUAD bmiColors[256];
+} BITMAPINFO;
 /* add here other structs you want to pack */
 
 #pragma pack(pop)
@@ -67,13 +78,14 @@ BOOL bmp_open(char* file, IMAGE* image) {
 		return FALSE;
 	}
 
-	/* todo: process file */
+	//Read the bitmap file header (BITMAPFILEHEADER)
 	fread(&bmfh.BfType, sizeof(bmfh.BfType), 1, fp);
 	fread(&bmfh.BfSize, sizeof(bmfh.BfSize), 1, fp);
 	fread(&bmfh.BfReserved1, sizeof(bmfh.BfReserved1), 1, fp);
 	fread(&bmfh.BfReserved2, sizeof(bmfh.BfReserved2), 1, fp);
 	fread(&bmfh.BfOffBits, sizeof(bmfh.BfOffBits), 1, fp);
 
+	//Read the bitmap info header (BITMAPINFOHEADER)
 	fread(&bmih.BiSize, sizeof(bmih.BiSize), 1, fp);
 	fread(&bmih.BiWidth, sizeof(bmih.BiWidth), 1, fp);
 	fread(&bmih.BiHeight, sizeof(bmih.BiHeight), 1, fp);
@@ -96,6 +108,7 @@ BOOL bmp_open(char* file, IMAGE* image) {
 
 	unsigned int imgSize = image->Height * image->Width;
 
+	//Read the bitmap image matrix
 	while(i < imgSize) {
 		fread(&blue, sizeof(BYTE), 1, fp);
 		fread(&green, sizeof(BYTE), 1, fp);
@@ -115,6 +128,8 @@ BOOL bmp_save(char* file, IMAGE* image) {
 
 	BITMAPFILEHEADER bmfh;
 	BITMAPINFOHEADER bmih;
+	BITMAPINFO bmi;
+	bmi.bmiHeader = bmih;
 
 	unsigned int i = 0;
 
@@ -127,13 +142,16 @@ BOOL bmp_save(char* file, IMAGE* image) {
 		return FALSE;
 	}
 
-	/* todo: store image to fp */
+	//Write the bitmap file header (BITMAPFILEHEADER)
 	fwrite(&bmfh.BfType, sizeof(bmfh.BfType), 1, fp);
 	fwrite(&bmfh.BfSize, sizeof(bmfh.BfSize), 1, fp);
 	fwrite(&bmfh.BfReserved1, sizeof(bmfh.BfReserved1), 1, fp);
 	fwrite(&bmfh.BfReserved2, sizeof(bmfh.BfReserved2), 1, fp);
 	fwrite(&bmfh.BfOffBits, sizeof(bmfh.BfOffBits), 1, fp);
 
+	bmih.BiBitCount = 8;	//Change to 8-bit bmp picture
+
+	//Write the bitmap info header (BITMAPINFOHEADER)
 	fwrite(&bmih.BiSize, sizeof(bmih.BiSize), 1, fp);
 	fwrite(&bmih.BiWidth, sizeof(bmih.BiWidth), 1, fp);
 	fwrite(&bmih.BiHeight, sizeof(bmih.BiHeight), 1, fp);
@@ -148,9 +166,21 @@ BOOL bmp_save(char* file, IMAGE* image) {
 	
 	unsigned int imgSize = image->Height * image->Width;
 
+	//Create the color palette (RGBQUAD)
+	for(i = 0; i < 256; i++){
+		bmi.bmiColors[i].rgbRed = i;
+		bmi.bmiColors[i].rgbGreen = i;
+		bmi.bmiColors[i].rgbBlue = i;
+		bmi.bmiColors[i].rgbReserved = 0;
+	}
+
+	//Write the color palette (RGBQUAD)
+	for(i = 0; i < 256; i++){
+		fwrite(&bmi.bmiColors[i], sizeof(bmi.bmiColors[i]), 1, fp);
+	}
+
+	//Write image matrix
     for(i = 0; i < imgSize; i++) {
-    	fwrite(&image->Pixels[i], sizeof(image->Pixels[i]), 1, fp);
-    	fwrite(&image->Pixels[i], sizeof(image->Pixels[i]), 1, fp);
     	fwrite(&image->Pixels[i], sizeof(image->Pixels[i]), 1, fp);
     }
 
