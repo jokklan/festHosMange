@@ -1,0 +1,19 @@
+!SESSION 2011-09-21 11:05:53.570 -----------------------------------------------
+eclipse.buildId=I20110613-1736
+java.version=1.6.0_21
+java.vendor=Sun Microsystems Inc.
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=da_DK
+Framework arguments:  -product org.eclipse.epp.package.cpp.product
+Command-line arguments:  -data C:\Users\Lars\festHosMange -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.cpp.product
+
+!ENTRY org.eclipse.ui 4 4 2011-09-21 11:06:03.478
+!MESSAGE Referenced part does not exist yet: org.eclipse.jdt.ui.PackageExplorer.
+
+!ENTRY org.eclipse.cdt.core 1 0 2011-09-21 11:06:25.770
+!MESSAGE Indexed 'festHosManga' (0 sources, 9 headers) in 0,46 sec: 41 declarations; 169 references; 4 unresolved inclusions; 0 syntax errors; 0 unresolved names (0,00 %)
+
+!ENTRY org.eclipse.cdt.core 1 0 2011-09-21 11:06:32.167
+!MESSAGE Indexed 'festHosMange' (0 sources, 9 headers) in 0,13 sec: 41 declarations; 169 references; 4 unresolved inclusions; 0 syntax errors; 0 unresolved names (0,00 %)
+
+!ENTRY org.eclipse.cdt.core 1 0 2011-09-21 11:07:05.842
+!MESSAGE Indexed 'Assignment1' (4 sources, 15 headers) in 0,54 sec: 913 declarations; 1.688 references; 4 unresolved inclusions; 0 syntax errors; 11 unresolved names (0,42 %)
