@@ -1,0 +1,4 @@
+.metadata
+Assignment1/.settings
+Assignment1/.cproject
+Assignment1/.project
