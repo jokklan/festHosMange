@@ -72,17 +72,10 @@ BITMAPINFOHEADER bmih;
 BOOL bmp_open(char* file, IMAGE* image) {
 	unsigned int imgSize;
 	unsigned int i = 0;
-<<<<<<< HEAD
 	unsigned int j;
 	BYTE red;
 	BYTE green;
 	BYTE blue;
-
-=======
-	BYTE red;
-	BYTE green;
-	BYTE blue;
->>>>>>> lidt optimering i struktur
 
 	/* note: "rb" means open for binary read */
 	FILE* fp = fopen(file, "rb");
@@ -117,7 +110,6 @@ BOOL bmp_open(char* file, IMAGE* image) {
 	image->Width = bmih.BiWidth;
 	imgSize = image->Height * image->Width;
 
-<<<<<<< HEAD
 	/*-----------------CHANGE, STOLEN FROM ANDERS---------------------*/
 	/* throwing away the palette if 8 bit */
 	if (bmih.BiBitCount == 8) {
@@ -187,17 +179,6 @@ BOOL bmp_open(char* file, IMAGE* image) {
 			perror("Not 8 nor 24 bit picture\n");
 			return FALSE;
 		}
-=======
-	//Read the bitmap image matrix
-	while(i < imgSize) {
-		fread(&blue, sizeof(BYTE), 1, fp);
-		fread(&green, sizeof(BYTE), 1, fp);
-		fread(&red, sizeof(BYTE), 1, fp);
-
-		image->Pixels[i] = (0.3 * red + 0.59 * green + 0.11 * blue);
-
-		i++;
->>>>>>> lidt optimering i struktur
 	}
 	/*-----------------CHANGE, STOLEN FROM ANDERS---------------------*/
 
@@ -230,6 +211,7 @@ BOOL bmp_save(char* file, IMAGE* image) {
 	BYTE one = 1;
 	BYTE ind = 1;
 	BYTE zero = 0;
+
 	/* note: "wb" means open for binary write */
 	FILE* fp = fopen(file, "wb");
 
@@ -239,11 +221,7 @@ BOOL bmp_save(char* file, IMAGE* image) {
 		return FALSE;
 	}
 
-<<<<<<< HEAD
 	if(compress) bmih.BiCompression = 1;
-=======
->>>>>>> lidt optimering i struktur
-
 	/* setting the new values to make it 8-bitmap */
 	bmih.BiSizeImage     = no_of_pixels;
 	bmfh.BfSize          = sizeof(bmfh) + sizeof(bmih) + 256*4 + no_of_pixels;
@@ -286,7 +264,6 @@ BOOL bmp_save(char* file, IMAGE* image) {
 		fwrite(&bmi.bmiColors[i], sizeof(bmi.bmiColors[i]), 1, fp);
 	}
 
-<<<<<<< HEAD
 
 	new_image.Height = image->Height;
 	new_image.Width = image->Width;
@@ -382,79 +359,6 @@ BOOL bmp_save(char* file, IMAGE* image) {
 	}
 
     printf("Save Complete \n");
-=======
-	/*BYTE filter[3][3];
-	filter[0][0] = 0;
-	filter[0][1] = 0;
-	filter[0][2] = 0;
-	filter[1][0] = 0;
-	filter[1][1] = 1;
-	filter[1][2] = 0;
-	filter[2][0] = 0;
-	filter[2][1] = 0;
-	filter[2][2] = 0;
-
-
-	new_image.Height = image->Height;
-	new_image.Width = image->Width;
-
-	int r;
-	int c;
-	int j;
-	int sum = 0;
-	int norm = 0;
-	int index;
-	int pixel_index;
-	int filter_index;
-
-	for(i = 1; i <= 3; i++){
-		for(j = 1; j <= 3; j++){
-			norm += filter[i][j];
-
-		}
-	}
-
-	if(norm <= 0){
-		norm = 1;
-	}else{
-		norm = 1 / norm;
-	}
-	//2D Convolution algorithm
-	for(r = 0; r < image->Height; r++) {
-		for(c = 0; c < image->Width; c++) {
-			pixel_index = r * image->Width + c;
-			for(i = 1; i <= 3; i++){
-				for(j = 1; j <= 3; j++){
-					filter_index = r * image->Width + (i-2) * image->Width + c + (j-2);
-					if((r == 0 && i == 1) || (r == image->Height && i == 3) || (c == 0 && j == 1) || (c == image->Width && j == 3)){
-						sum += filter[i][j] * image->Pixels[pixel_index];
-					}else{
-						sum += filter[i][j] * image->Pixels[filter_index];
-					}
-					if(r <= 1 && c <= 100){
-						printf("index: %d, r: %d, c: %d, i: %d, j: %d, width: %d \n", index, r, c, i, j, image->Width);
-					}
-					sum += filter[i][j] * image->Pixels[pixel_index];
-				}
-			}
-			float I_mark = norm*sum;
-			if (I_mark < 0) {
-				new_image.Pixels[pixel_index] = norm*sum*(-1);
-			} else if (I_mark > 255) {
-				new_image.Pixels[pixel_index] = 255;
-			} else new_image.Pixels[pixel_index] = norm*sum;
-			new_image.Pixels[r * image->Width + c] = norm * sum;
-			sum = 0;
-		}
-	}*/
-
-	//Write image matrix
-    for(i = 0; i < imgSize; i++) {
-    	fwrite(&image->Pixels[i], sizeof(image->Pixels[i]), 1, fp);
-    }
-
-    printf("Save Complete");
->>>>>>> lidt optimering i struktur
 	fclose(fp);
 	return TRUE;
 }
