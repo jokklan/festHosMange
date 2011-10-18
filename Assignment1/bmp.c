@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "bmp.h"
+#include "filter.h"
 
 /* see lecture notes for more information on pragma pack directive */
 #pragma pack(push, 1)
@@ -72,7 +73,6 @@ BITMAPINFOHEADER bmih;
 BOOL bmp_open(char* file, IMAGE* image) {
 	unsigned int imgSize;
 	unsigned int i = 0;
-	unsigned int j;
 	BYTE red;
 	BYTE green;
 	BYTE blue;
@@ -86,14 +86,14 @@ BOOL bmp_open(char* file, IMAGE* image) {
 		return FALSE;
 	}
 
-	//Read the bitmap file header (BITMAPFILEHEADER)
+	/* Read the bitmap file header (BITMAPFILEHEADER) */
 	fread(&bmfh.BfType, sizeof(bmfh.BfType), 1, fp);
 	fread(&bmfh.BfSize, sizeof(bmfh.BfSize), 1, fp);
 	fread(&bmfh.BfReserved1, sizeof(bmfh.BfReserved1), 1, fp);
 	fread(&bmfh.BfReserved2, sizeof(bmfh.BfReserved2), 1, fp);
 	fread(&bmfh.BfOffBits, sizeof(bmfh.BfOffBits), 1, fp);
 
-	//Read the bitmap info header (BITMAPINFOHEADER)
+	/* Read the bitmap info header (BITMAPINFOHEADER) */
 	fread(&bmih.BiSize, sizeof(bmih.BiSize), 1, fp);
 	fread(&bmih.BiWidth, sizeof(bmih.BiWidth), 1, fp);
 	fread(&bmih.BiHeight, sizeof(bmih.BiHeight), 1, fp);
@@ -110,7 +110,6 @@ BOOL bmp_open(char* file, IMAGE* image) {
 	image->Width = bmih.BiWidth;
 	imgSize = image->Height * image->Width;
 
-	/*-----------------CHANGE, STOLEN FROM ANDERS---------------------*/
 	/* throwing away the palette if 8 bit */
 	if (bmih.BiBitCount == 8) {
 		BYTE trash;
@@ -123,34 +122,9 @@ BOOL bmp_open(char* file, IMAGE* image) {
 	if (bmih.BiCompression != 0) {
 
 		/* picture is compressed */
-		printf("Uncompressing picture\n");
-		BYTE ind; /* indicator */
-		BYTE clr; /* color */
-		BOOL endReached = FALSE; /* decides if end of picture is reached */
-		int pixIndex = 0; /* pixel-index */
-
-		/* uncompressing */
-		while (!endReached) {
-			fread(&ind, sizeof(BYTE), 1, fp);
-			fread(&clr, sizeof(BYTE), 1, fp);
-
-			/* if count != 0, get color */
-			if (ind != 0) {
-				for (j = 0; j < ind; j++) {
-					image->Pixels[pixIndex++] = clr;
-				}
-
-			/* if count == 0, end-indicator */
-			} else if (clr == 1){
-				endReached = TRUE;
-			}
-		}
-
-		/* setting picture as uncompressed */
-		bmih.BiCompression = 0;
+		bmp_uncompress(fp, image);
 
 	} else {
-
 		/* picture is not compressed */
 		printf("Opening uncompressed picture\n");
 
@@ -164,7 +138,6 @@ BOOL bmp_open(char* file, IMAGE* image) {
 			for (i = 0; i < imgSize; i++) {
 				fread(&grayscale, sizeof(BYTE), 1, fp);
 				image->Pixels[i] = grayscale;
-// printf("Pixel %d: %d\n",i,grayscale);
 			}
 		} else if (bmih.BiBitCount == 24) {
 
@@ -180,37 +153,50 @@ BOOL bmp_open(char* file, IMAGE* image) {
 			return FALSE;
 		}
 	}
-	/*-----------------CHANGE, STOLEN FROM ANDERS---------------------*/
 
 	/* success */
 	fclose(fp);
 	return TRUE;
 }
 
-BOOL bmp_save(char* file, IMAGE* image) {
+BOOL bmp_uncompress(FILE* fp, IMAGE* image) {
+	unsigned int j;
+	BYTE ind; /* indicator */
+	BYTE clr; /* color */
+	BOOL endReached = FALSE; /* decides if end of picture is reached */
+	int pixIndex = 0; /* pixel-index */
+
+	printf("Uncompressing picture\n");
+	/* uncompressing */
+	while (!endReached) {
+		fread(&ind, sizeof(BYTE), 1, fp);
+		fread(&clr, sizeof(BYTE), 1, fp);
+
+		/* if count != 0, get color */
+		if (ind != 0) {
+			for (j = 0; j < ind; j++) {
+				image->Pixels[pixIndex++] = clr;
+			}
+
+		/* if count == 0, end-indicator */
+		} else if (clr == 1){
+			endReached = TRUE;
+		}
+	}
+
+	/* setting picture as uncompressed */
+	bmih.BiCompression = 0;
+
+	return TRUE;
+}
+
+BOOL bmp_save(char* file, IMAGE* image, BOOL compress) {
 	BITMAPINFO bmi;
-	IMAGE new_image;
+	unsigned int i;
 	int no_of_pixels = bmih.BiWidth * bmih.BiHeight;
 	bmi.bmiHeader = bmih;
-	int filter[9]= {
-	        0 , 0 , 0 ,
-	        0 , 1 , 0 ,
-	        0 , 0 , 0
-	    };
-	unsigned int i;
-	unsigned int r;
-	unsigned int c;
-	unsigned int j;
-	int sum = 0;
-	BOOL use_filter = FALSE;
-	BOOL compress = TRUE;
-	float norm;
-	int Nsum;
-	int pixel_index;
-	int filter_index;
-	BYTE one = 1;
-	BYTE ind = 1;
-	BYTE zero = 0;
+
+	BOOL use_filter = TRUE;
 
 	/* note: "wb" means open for binary write */
 	FILE* fp = fopen(file, "wb");
@@ -221,13 +207,13 @@ BOOL bmp_save(char* file, IMAGE* image) {
 		return FALSE;
 	}
 
-	if(compress) bmih.BiCompression = 1;
 	/* setting the new values to make it 8-bitmap */
-	bmih.BiSizeImage     = no_of_pixels;
+	bmih.BiSizeImage     = 0;
 	bmfh.BfSize          = sizeof(bmfh) + sizeof(bmih) + 256*4 + no_of_pixels;
 	bmfh.BfOffBits       = sizeof(bmfh) + sizeof(bmih) + 256*4;
 	bmih.BiClrUsed       = 256;
 	bmih.BiBitCount      = 8;
+	if(compress) bmih.BiCompression = 1;
 
 	//Write the bitmap file header (BITMAPFILEHEADER)
 	fwrite(&bmfh.BfType, sizeof(bmfh.BfType), 1, fp);
@@ -265,93 +251,15 @@ BOOL bmp_save(char* file, IMAGE* image) {
 	}
 
 
-	new_image.Height = image->Height;
-	new_image.Width = image->Width;
-
-	Nsum = 0;
-	for (i = 0; i < 9; i++) {
-		Nsum = Nsum + filter[i];
-	}
-	if (Nsum != 0) {
-		norm = 1/Nsum;
-	} else {
-		norm = 1;
-	}
-
 	if(use_filter){
-		printf("Filter picture \n");
-
-		//2D Convolution algorithm
-		for(r = 0; r < image->Height; r++) {
-			for(c = 0; c < image->Width; c++) {
-				pixel_index = r * image->Width + c;
-				for(i = 0; i < 3; i++){
-					for(j = 0; j < 3; j++){
-						filter_index = r * image->Width + (i-1) * image->Width + c + (j-1);
-						if((r == 0 && i == 0) || (r == image->Height && i == 2) || (c == 0 && j == 0) || (c == image->Width && j == 2)){
-							sum += filter[i*3+j] * image->Pixels[pixel_index];
-						}else{
-							sum += filter[i*3+j] * image->Pixels[filter_index];
-						}
-					}
-				}
-				float I_mark = norm*sum;
-				if (I_mark < 0) {
-					new_image.Pixels[pixel_index] = norm*sum*(-1);
-				} else if (I_mark > 255) {
-					new_image.Pixels[pixel_index] = 255;
-				} else {
-					new_image.Pixels[pixel_index] = norm*sum;
-				}
-				//new_image.Pixels[r * image->Width + c] = norm * sum;
-				sum = 0;
-			}
-		}
+		filter(image);
 	}
+
 	if(compress){
 		/* saving as compressed picture */
-		printf("Compressing picture \n");
-
-		/* compressing */
-
-		/* for every pixel */
-		for (i = 0; i < imgSize; i++) {
-			if ((i+1) % bmih.BiWidth == 0) {
-				if(i < 500){
-					printf("%d: NEWLINE \n", i);
-				}
-				/* newline coming - write latest colour */
-				fwrite(&ind, sizeof(BYTE), 1, fp);
-				fwrite(&image->Pixels[i], sizeof(image->Pixels[i]), 1, fp);
-
-				/* newline */
-				fwrite(&zero, sizeof(BYTE), 1, fp);
-				fwrite(&zero, sizeof(BYTE), 1, fp);
-
-				ind = 1;
-			} else if (image->Pixels[i] == image->Pixels[i + 1] && ind < 255) {
-				if(i < 500){
-					printf("%d: same color: %d \n", i ,image->Pixels[i]);
-				}
-				/* next color is the same or the count almost reached overflow */
-				ind++;
-			} else {
-				if(i < 500){
-					printf("%d: new color: %d \n", i ,image->Pixels[i]);
-				}
-				/* next color is NOT the same - write */
-				fwrite(&ind, sizeof(BYTE), 1, fp);
-				fwrite(&image->Pixels[i], sizeof(BYTE), 1, fp);
-
-				ind = 1;
-			}
-		}
-
-		/* end of file write */
-		fwrite(&zero, sizeof(BYTE), 1, fp);
-		fwrite(&one, sizeof(BYTE), 1, fp);
+		bmp_compress(fp, image);
 	}else{
-		//Write image matrix
+		/* saving as uncompressed picture */
 		printf("Saving uncompressed picture \n");
 		for(i = 0; i < imgSize; i++) {
 			fwrite(&image->Pixels[i], sizeof(BYTE), 1, fp);
@@ -360,6 +268,61 @@ BOOL bmp_save(char* file, IMAGE* image) {
 
     printf("Save Complete \n");
 	fclose(fp);
+	return TRUE;
+}
+
+BOOL bmp_compress(FILE* fp, IMAGE* image) {
+	unsigned int i;
+	unsigned int imgSize = image->Height * image->Width;
+	BYTE one = 1;
+	BYTE ind = 1;
+	BYTE zero = 0;
+	bmih.BiSizeImage = 0;
+
+	/* saving as compressed picture */
+	printf("Compressing and saving picture \n");
+
+	/* compressing */
+	bmih.BiSizeImage = 0;
+
+	/* for every pixel */
+	for (i = 0; i < imgSize; i++) {
+		if ((i+1) % bmih.BiWidth == 0) {
+			if(i < 500){
+			}
+			/* newline coming - write latest colour */
+			fwrite(&ind, sizeof(BYTE), 1, fp);
+			fwrite(&image->Pixels[i], sizeof(image->Pixels[i]), 1, fp);
+			bmih.BiSizeImage = bmih.BiSizeImage + sizeof(image->Pixels[i]);
+			/* newline */
+			fwrite(&zero, sizeof(BYTE), 1, fp);
+			fwrite(&zero, sizeof(BYTE), 1, fp);
+			bmih.BiSizeImage = bmih.BiSizeImage + sizeof(BYTE) + sizeof(BYTE);
+
+			ind = 1;
+		} else if (image->Pixels[i] == image->Pixels[i + 1] && ind < 255) {
+			if(i < 500){
+			}
+			/* next color is the same or the count almost reached overflow */
+			ind++;
+		} else {
+			if(i < 500){
+			}
+			/* next color is NOT the same - write */
+			fwrite(&ind, sizeof(BYTE), 1, fp);
+			fwrite(&image->Pixels[i], sizeof(BYTE), 1, fp);
+			bmih.BiSizeImage = bmih.BiSizeImage + sizeof(image->Pixels[i]);
+			ind = 1;
+		}
+	}
+
+	/* end of file write */
+	fwrite(&zero, sizeof(BYTE), 1, fp);
+	fwrite(&one, sizeof(BYTE), 1, fp);
+
+	bmih.BiSizeImage = bmih.BiSizeImage + sizeof(BYTE) + sizeof(BYTE);
+	bmfh.BfSize = sizeof(bmfh) + sizeof(bmih) + 256*4 + bmih.BiSizeImage;
+
 	return TRUE;
 }
 

@@ -28,7 +28,7 @@ void lcd_set_height(WORD height) {
 }
 
 void lcd_show_image() {
-	if(!bmp_save("output.bmp", &image)) {
+	if(!bmp_save("output.bmp", &image, FALSE)) {
 		printf("lcd_show_image(): failed to save file\n");
 	}
 }
