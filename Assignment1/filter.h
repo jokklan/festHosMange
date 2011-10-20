@@ -23,9 +23,9 @@ typedef struct {
 } FILTER;
 
 static int filter_data[19][4] = {
-	{3, 3, 0, 0},	//1
-	{3, 3, 0, 0},	//1
-	{3, 3, -1, 256},//2
+	{1, 1, 0, 0},	//1
+	{1, 1, 0, 0},	//1
+	{1, 1, -1, 256},//2
 	{3, 3, 0, 128},	//3
 	{3, 3, 0, 0},	//4
 	{3, 3, 0, 0},	//5
@@ -47,19 +47,13 @@ static int filter_data[19][4] = {
 
 static int filter_values[19][MAX_FILTER_WIDTH*MAX_FILTER_HEIGHT] = {
 	{// 0: Erase
-		0 , 0 , 0 ,
-		0 , 0 , 0  ,
-		0 , 0 , 0
+		0
 	},
 	{// 1: Normal filter, do not change anything
-		0 , 0 , 0 ,
-		0 , 1 , 0  ,
-		0 , 0 , 0
+		1
 	},
 	{// 2: Invert filter
-		0 , 0 , 0 ,
-		0 , 1 , 0  ,
-		0 , 0 , 0
+		1
 	},
 	{// 3: Emboss (light)
 		-1 , -1 , 0 ,

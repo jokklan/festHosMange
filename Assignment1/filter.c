@@ -32,7 +32,7 @@ BOOL add_extra_filter(FILTER* filter, int* array, int size) {
 }
 
 BOOL filter(IMAGE* image) {
-	int filter_id = 9;
+	int filter_id = 2;
 	FILTER filter = create_filter(filter_data[filter_id][0], filter_data[filter_id][1], filter_values[filter_id], filter_data[filter_id][2], filter_data[filter_id][3]);
 	int extra_filter_id = 0;
 	add_extra_filter(&filter, filter_values[extra_filter_id], filter_data[extra_filter_id][0]*filter_data[extra_filter_id][1]);
