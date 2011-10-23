@@ -10,184 +10,271 @@
 #include "mp.h"
 #include "ui.h"
 
-void go_ui();
+/* outcomment define statement to disable performance check */
+#define PERFORMANCE
+
+#ifdef PERFORMANCE
+    #include <time.h>
+    clock_t start, end;
+    double cpu_time_used;
+#endif
+
+/* prototypes */
+void test(char* filename, BOOL compressed, BOOL filter, int filter_ID);
+
+/* path of images - need to be set relative to the computer testing */
+char path_input[150]    = "C:\\Users\\Johan\\Dropbox\\festHosMange\\Assignment1\\input\\\0";
+char path_output[150]   = "C:\\Users\\Johan\\Dropbox\\festHosMange\\Assignment1\\output\\\0";
+
+
+
+void test(char* filename_input, BOOL compressed, BOOL filter, int filter_ID);
+void start_ui();
 
 int main(int argc, char *argv[]) {
-	WORD i, w, h;
-	BOOL ui = TRUE;
 
-	if (ui) {
-		go_ui();
-	} else {
+	//test("example24",FALSE, FALSE, -1);
+	start_ui();
+	return 0;
 
-		/* capture image */
-		ccd_capture_image();
 
-		/* reset ccd and lcd pointers */
-		ccd_reset_pointer();
-		lcd_reset_pointer();
+}
 
-		/* set width/height of lcd to match captured image */
-		w = ccd_get_width();
-		h = ccd_get_height();
+void start_ui() {
+	int option;
+	char choice;
+	int i, w, h;
+	BOOL performance;
+	char filename_input[20];
+	printf("Do you want to make an performance analysis as you go? (y/n)\n> ");
+	scanf("%c", &choice);
+
+	if (choice == "y") {
+		performance = TRUE;
+	}else{
+		performance = FALSE;
+	}
+
+	printf("Choose one of the following options:\n");
+	printf(" 1) Capture image\n");
+	printf(" 2) Show image\n");
+	printf(" 3) Filter image\n");
+	printf("> ");
+	scanf("%d",&option);
+
+	switch (option) {
+	case 1:
+	    /* capturing image */
+		printf("Name of the file you want to capture:\n> ");
+		scanf("%s", filename_input);
+	    strcat(path_input, filename_input);
+	    strcat(path_input, ".bmp");
+
+	    if (performance) { start = clock(); }
+
+	    ccd_capture_image(path_input);
+
+	    if (performance) {
+			end = clock();
+			cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+			printf("Time used on capturing image: %f sec\n",cpu_time_used);
+	    }
+
+		/* transfering image from CCD to MP */
+		if (performance) { start = clock(); }
+
+		w = ccd_get_height();
+		h = ccd_get_width();
 
 		lcd_set_width(w);
 		lcd_set_height(h);
 
-		/* transfer image from ccd to lcd a pixel at a time */
-		for (i = 0; i < w * h; i++)
+		lcd_reset_pointer();
+		ccd_reset_pointer();
+
+		for (i = 0; i < w * h; i++) {
 			lcd_set_pixel(ccd_get_pixel());
-
-		/* show image on lcd */
-		lcd_show_image();
-	}
-
-	return 0;
-}
-
-void go_ui() {
-
-	BOOL performance = FALSE;
-	char filename[20];
-	char filename2[20];
-	clock_t start, end;
-	char yn[1];
-	double cpu_time_used;
-	/*do {*/
-	printf("Do you want performance analysis? (y/n)\n> ");
-		/*scanf("%s", yn);
-	} while (strncmp(yn, "y", 1) != 0 && strncmp(yn, "n", 1) != 0);*/
-	/*performance = (strncmp(yn, "y", 1) == 0);*/
-
-	int currentScreen = ui_start_screen();
-
-	while (currentScreen != -1) {
-		switch (currentScreen) {
-		case 0: // CHOOSE FUNCTION
-			// the menu
-			currentScreen = ui_start_screen();
-			break;
-		case 1: // CAPTURE IMAGE
-			// capturing image
-			do {
-				printf("Name of the file you want to capture:\n> ");
-				scanf("%s", filename);
-			} while (strncmp(filename, "-1", 1) != 0 && !mp_get_image(filename));
-
-			if (strncmp(filename, "-1", 1) != 0) {
-				// give name to captured image
-				printf("Give a name to the captured image:\n> ");
-				scanf("%s", filename2);
-				printf("Filename2 before = %s\n", filename2);
-
-				// compress image?
-				do {
-					printf("Do you want compress the picture? (y/n)\n> ");
-					scanf("%s", yn);
-				} while (strncmp(yn, "y", 1) != 0 && strncmp(yn, "n", 1) != 0);
-
-				printf("Filename2 after = %s\n", filename2);
-				if (strncmp(yn, "y", 1) == 0) {
-					// saving compressed
-					if (!mp_compress_image(filename2)) {
-						printf("Failed compressing captured image");
-					}
-				} else {
-					// saving uncompressed
-					if (!mp_save_image(filename2)) {
-						printf("Failed saving captured image");
-					}
-				}
-			}
-
-			currentScreen = 0;
-			break;
-		case 2: // COMPRESS IMAGE
-			// loading the picture
-			start = clock();
-			do {
-				printf("Name of the file you want to compress:\n> ");
-				scanf("%s", filename);
-			} while (strncmp(filename, "-1", 1) != 0
-					&& !mp_load_image(filename, FALSE));
-			end = clock();
-			cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-
-			// performance check ?
-			if (performance)
-				printf("CPU time used on loading image: %f sec\n",
-						cpu_time_used);
-
-			start = clock();
-			if (strncmp(filename, "-1", 1) != 0) {
-				// compressing chosen image. give name to compressed image
-				do {
-					printf("Give a name to the compressed picture:\n> ");
-					scanf("%s", filename);
-				} while (!mp_compress_image(filename) && *filename != -1);
-			}
-			end = clock();
-			cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-
-			// performance check ?
-			if (performance)
-				printf("CPU time used on saving compressing image: %f sec\n",
-						cpu_time_used);
-
-			currentScreen = 0;
-			break;
-		case 3: // FILTER IMAGE
-			// getting the image
-			do {
-				printf("Name of the file you want to filter:\n> ");
-				scanf("%s", filename);
-			} while (strncmp(filename, "-1", 1) != 0
-					&& !mp_load_image(filename, FALSE));
-
-			if (strncmp(filename, "-1", 1) != 0) {
-				// choose filter
-				int filter_id = ui_filter_screen();
-				int extra_filter_id = ui_filter_screen();
-
-				// filter the image
-				start = clock();
-				if (!mp_filter_image(filter_id, extra_filter_id)) {
-					printf("ERROR: occured when trying to filter with UI");
-				}
-				end = clock();
-				cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-
-				// performance check ?
-				if (performance)
-					printf("CPU time used on filtering: %f sec\n",
-							cpu_time_used);
-
-				// name of new filtered image
-				printf("Give a name to the filtered image:\n> ");
-				scanf("%s", filename2);
-				start = clock();
-				if (!mp_save_image(filename2)) {
-					printf("Failed saving captured image");
-				}
-				end = clock();
-				cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-
-				// performance check ?
-				if (performance)
-					printf("CPU time used on saving filtered image: %f sec\n",
-							cpu_time_used);
-			}
-			currentScreen = 0;
-			break;
-		case 4: // SHOW IMAGE
-			// show image
-			currentScreen = ui_showimage_screen();
-			break;
-		default:
-			// try again
-			printf("Function not recognized. Try again\n");
-			currentScreen = 0;
-			break;
 		}
+
+		if (performance) {
+		    end = clock();
+		    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+		    printf("Time used on transfering from CCD to MP: %f sec\n",cpu_time_used);
+		}
+		break;
+	case 2:
+		if (performance) { start = clock(); }
+
+		w = mp_get_height();
+		h = mp_get_width();
+
+		mp_reset_pointer();
+		lcd_reset_pointer();
+
+		for (i = 0; i < w * h; i++) {
+			lcd_set_pixel(mp_get_pixel());
+		}
+
+		lcd_set_width(mp_get_width());
+		lcd_set_height(mp_get_height());
+
+		if (performance) {
+			end = clock();
+			cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+			printf("Time used on transfering from MP to LCD: %f sec\n",cpu_time_used);
+		}
+
+		/* compressing image if told and showing */
+
+
+		strcat(path_output, "display");
+		strcat(path_output, ".bmp");
+
+		if (performance) { start = clock(); }
+
+		lcd_show_image(path_output,TRUE);
+
+		if (performance) {
+			end = clock();
+			cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+			printf("Time used on showing the compressed image: %f sec\n",cpu_time_used);
+		}
+		break;
+	case 3:
+		/* filtering image */
+
+
+		printf("Choose one of the following filters:\n");
+		printf(" 0) Black\n");
+		printf(" 1) Normal\n");
+		printf(" 2) Invert color\n");
+		printf(" 3) Emboss (light)\n");
+		printf(" 4) Blur (light)\n");
+		printf(" 5) Find edges (all directions, light)\n");
+		printf(" 6) Sharpen (light)\n");
+		printf(" 7) Show edges (light)\n");
+		printf(" 8) Mean (light)\n");
+		printf(" 9) Find edges (horizontal, medium)\n");
+		printf(" 10) Emboss (medium)\n");
+		printf(" 11) Find edges (vertical, medium)\n");
+		printf(" 12) Motion blur (medium)\n");
+		printf(" 13) Find edges (45° direction, medium)\n");
+		printf(" 14) Blur (medium)\n");
+		printf(" 15) Mean (medium)\n");
+		printf(" 16) Shatter (diagonal, medium)\n");
+		printf(" 17) 'Fire' effect (medium)\n");
+		printf(" 18) Motion blur (Very heavy)\n");
+		printf("> ");
+		scanf("%d",&option);
+
+		if (performance) { start = clock(); }
+
+		mp_filter_image(option);
+		if (performance) {
+			end = clock();
+			cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+			printf("Time used on filtering: %f sec\n",cpu_time_used);
+		}
+
+		break;
+	default:
+		break;
 	}
 }
+
+void test(char* filename_input, BOOL compressed, BOOL filter, int filter_ID) {
+    int i, w, h;
+    /* capturing image */
+#ifdef PERFORMANCE
+    start = clock();
+#endif
+    strcat(path_input, filename_input);
+    strcat(path_input, ".bmp");
+    ccd_capture_image(path_input);
+#ifdef PERFORMANCE
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("Time used on capturing image: %f sec\n",cpu_time_used);
+#endif
+
+    /* transfering image from CCD to MP */
+#ifdef PERFORMANCE
+    start = clock();
+#endif
+
+    w = ccd_get_height();
+    h = ccd_get_width();
+
+    mp_set_width(w);
+    mp_set_height(h);
+
+    mp_reset_pointer();
+    ccd_reset_pointer();
+
+    for (i = 0; i < w * h; i++) {
+    	mp_set_pixel(ccd_get_pixel());
+    }
+
+#ifdef PERFORMANCE
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("Time used on transfering from CCD to LCD: %f sec\n",cpu_time_used);
+#endif
+
+    /* filtering image if told */
+    if (filter) {
+#ifdef PERFORMANCE
+        start = clock();
+#endif
+        //mp_filter_image(filter_ID);
+#ifdef PERFORMANCE
+        end = clock();
+        cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+        printf("Time used on filtering: %f sec\n",cpu_time_used);
+#endif
+    }
+
+    /* transfering image from MP to LCD */
+
+#ifdef PERFORMANCE
+    start = clock();
+#endif
+
+    ccd_reset_pointer();
+    lcd_reset_pointer();
+
+    for (i = 0; i < w * h; i++) {
+        lcd_set_pixel(ccd_get_pixel());
+    }
+
+    lcd_set_width(ccd_get_width());
+    lcd_set_height(ccd_get_height());
+
+#ifdef PERFORMANCE
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("Time used on transfering from CCD to LCD: %f sec\n",cpu_time_used);
+#endif
+
+    /* compressing image if told and showing */
+#ifdef PERFORMANCE
+    start = clock();
+#endif
+    strcat(path_output, "display");
+    strcat(path_output, ".bmp");
+    if (compressed) lcd_show_image(path_output,TRUE);
+    else lcd_show_image(path_output,FALSE);
+
+#ifdef PERFORMANCE
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    if (compressed)
+        printf("Time used on showing the compressed image: %f sec\n",cpu_time_used);
+    else
+        printf("Time used on showing the uncompressed image: %f sec\n",cpu_time_used);
+#endif
+
+}
+
+
+

@@ -196,7 +196,7 @@ BOOL bmp_save(char* file, IMAGE* image, BOOL compress) {
 	int no_of_pixels = bmih.BiWidth * bmih.BiHeight;
 	bmi.bmiHeader = bmih;
 
-	BOOL use_filter = TRUE;
+	BOOL use_filter = FALSE;
 
 	/* note: "wb" means open for binary write */
 	FILE* fp = fopen(file, "wb");
@@ -252,7 +252,7 @@ BOOL bmp_save(char* file, IMAGE* image, BOOL compress) {
 
 
 	if(use_filter){
-		filter(image);
+		filter_image(image, 2);
 	}
 
 	if(compress){

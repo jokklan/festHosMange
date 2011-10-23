@@ -9,6 +9,7 @@
 #define FILTER_H_
 
 #include "types.h"
+#include "bmp.h"
 
 #define MAX_FILTER_WIDTH	9
 #define MAX_FILTER_HEIGHT	9
@@ -169,7 +170,7 @@ BOOL add_extra_filter(FILTER* filter, int* array, int size);
 FILTER create_filter(int height, int width, int* array, float factor, float bias);
 
 /* filter image */
-BOOL filter(IMAGE* image);
+BOOL filter_image(IMAGE* image, int filter_id);
 
 /* filter image */
 BOOL filter_process(FILTER* filter, IMAGE* image);
