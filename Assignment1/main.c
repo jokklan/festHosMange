@@ -24,8 +24,8 @@
 void test(char* filename, BOOL compressed, BOOL filter, int filter_ID);
 
 /* path of images - need to be set relative to the computer testing */
-char path_input[150]    = "C:\\Users\\Johan\\Dropbox\\festHosMange\\Assignment1\\input\\\0";
-char path_output[150]   = "C:\\Users\\Johan\\Dropbox\\festHosMange\\Assignment1\\output\\\0";
+char path_input[150]    = "input\\\0";
+char path_output[150]   = "output\\\0";
 
 
 
@@ -34,7 +34,7 @@ void start_ui();
 
 int main(int argc, char *argv[]) {
 
-	test("example24",TRUE, TRUE, 1);
+	test("example24",TRUE, TRUE, 5);
 	//start_ui();
 	return 0;
 
