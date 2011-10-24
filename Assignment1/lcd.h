@@ -15,7 +15,7 @@ void lcd_set_width(WORD width);
 void lcd_set_height(WORD height);
 
 /* show the image */
-void lcd_show_image();
+void lcd_show_image(char* output_path, BOOL compress);
 
 /* reset the internal pixel pointer */
 void lcd_reset_pointer();

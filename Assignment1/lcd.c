@@ -27,8 +27,8 @@ void lcd_set_height(WORD height) {
 	image.Height = height;
 }
 
-void lcd_show_image() {
-	if(!bmp_save("output.bmp", &image, TRUE)) {
+void lcd_show_image(char* output_path, BOOL compress) {
+	if(!bmp_save(output_path, &image, compress)) {
 		printf("lcd_show_image(): failed to save file\n");
 	}
 }

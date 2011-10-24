@@ -15,7 +15,7 @@ WORD ccd_get_width();
 WORD ccd_get_height();
 
 /* capture an image */
-void ccd_capture_image();
+void ccd_capture_image(char* image_path);
 
 /* reset internal pixel pointer */
 void ccd_reset_pointer();

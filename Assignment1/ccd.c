@@ -20,9 +20,9 @@ WORD ccd_get_width() {
 	return current_image.Width;
 }
 
-void ccd_capture_image() {
+void ccd_capture_image(char* image_path) {
 	
-	if(!bmp_open("example24.bmp", &current_image)) {
+	if(!bmp_open(image_path, &current_image)) {
 		printf("ccd_capture_image(): failed to open file\n");
 		exit(0);
 	}

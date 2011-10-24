@@ -34,7 +34,7 @@ void start_ui();
 
 int main(int argc, char *argv[]) {
 
-	test("example24",TRUE, TRUE, 3);
+	test("example24",TRUE, TRUE, 1);
 	//start_ui();
 	return 0;
 
@@ -217,6 +217,7 @@ void test(char* filename_input, BOOL compressed, BOOL filter, int filter_ID) {
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("Time used on transfering from CCD to MP: %f sec\n",cpu_time_used);
 
+    if(filter) {
     /* filtering image if told */
 
         start = clock();
@@ -226,7 +227,7 @@ void test(char* filename_input, BOOL compressed, BOOL filter, int filter_ID) {
         end = clock();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
         printf("Time used on filtering: %f sec\n",cpu_time_used);
-
+    }
 
     /* transfering image from MP to LCD */
 

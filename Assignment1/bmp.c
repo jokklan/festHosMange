@@ -196,8 +196,6 @@ BOOL bmp_save(char* file, IMAGE* image, BOOL compress) {
 	int no_of_pixels = bmih.BiWidth * bmih.BiHeight;
 	bmi.bmiHeader = bmih;
 
-	BOOL use_filter = FALSE;
-
 	/* note: "wb" means open for binary write */
 	FILE* fp = fopen(file, "wb");
 
@@ -248,11 +246,6 @@ BOOL bmp_save(char* file, IMAGE* image, BOOL compress) {
 	//Write the color palette (RGBQUAD)
 	for(i = 0; i < 256; i++){
 		fwrite(&bmi.bmiColors[i], sizeof(bmi.bmiColors[i]), 1, fp);
-	}
-
-
-	if(use_filter){
-		filter_image(image, 2);
 	}
 
 	if(compress){
