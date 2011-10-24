@@ -6,9 +6,10 @@
 #include <string.h>
 #include "ccd.h"
 #include "lcd.h"
-#include <time.h>
 #include "mp.h"
-#include "ui.h"
+#include "bmp.h"
+#include "filter.h"
+#include <time.h>
 
 /* outcomment define statement to disable performance check */
 #define PERFORMANCE
@@ -33,8 +34,8 @@ void start_ui();
 
 int main(int argc, char *argv[]) {
 
-	//test("example24",FALSE, FALSE, -1);
-	start_ui();
+	test("example24",TRUE, TRUE, 3);
+	//start_ui();
 	return 0;
 
 
@@ -49,7 +50,7 @@ void start_ui() {
 	printf("Do you want to make an performance analysis as you go? (y/n)\n> ");
 	scanf("%c", &choice);
 
-	if (choice == "y") {
+	if (&choice == "y") {
 		performance = TRUE;
 	}else{
 		performance = FALSE;
@@ -83,17 +84,17 @@ void start_ui() {
 		/* transfering image from CCD to MP */
 		if (performance) { start = clock(); }
 
-		w = ccd_get_height();
-		h = ccd_get_width();
+		w = mp_get_height();
+		h = mp_get_width();
 
-		lcd_set_width(w);
-		lcd_set_height(h);
+		ccd_get_width(w);
+		ccd_get_height(h);
 
 		lcd_reset_pointer();
 		ccd_reset_pointer();
 
 		for (i = 0; i < w * h; i++) {
-			lcd_set_pixel(ccd_get_pixel());
+			mp_set_pixel(ccd_get_pixel());
 		}
 
 		if (performance) {
@@ -108,15 +109,15 @@ void start_ui() {
 		w = mp_get_height();
 		h = mp_get_width();
 
+		lcd_set_width(mp_get_width());
+		lcd_set_height(mp_get_height());
+
 		mp_reset_pointer();
 		lcd_reset_pointer();
 
 		for (i = 0; i < w * h; i++) {
 			lcd_set_pixel(mp_get_pixel());
 		}
-
-		lcd_set_width(mp_get_width());
-		lcd_set_height(mp_get_height());
 
 		if (performance) {
 			end = clock();
@@ -185,22 +186,19 @@ void start_ui() {
 void test(char* filename_input, BOOL compressed, BOOL filter, int filter_ID) {
     int i, w, h;
     /* capturing image */
-#ifdef PERFORMANCE
+
     start = clock();
-#endif
+
     strcat(path_input, filename_input);
     strcat(path_input, ".bmp");
     ccd_capture_image(path_input);
-#ifdef PERFORMANCE
+
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("Time used on capturing image: %f sec\n",cpu_time_used);
-#endif
 
     /* transfering image from CCD to MP */
-#ifdef PERFORMANCE
     start = clock();
-#endif
 
     w = ccd_get_height();
     h = ccd_get_width();
@@ -215,64 +213,58 @@ void test(char* filename_input, BOOL compressed, BOOL filter, int filter_ID) {
     	mp_set_pixel(ccd_get_pixel());
     }
 
-#ifdef PERFORMANCE
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Time used on transfering from CCD to LCD: %f sec\n",cpu_time_used);
-#endif
+    printf("Time used on transfering from CCD to MP: %f sec\n",cpu_time_used);
 
     /* filtering image if told */
-    if (filter) {
-#ifdef PERFORMANCE
+
         start = clock();
-#endif
-        //mp_filter_image(filter_ID);
-#ifdef PERFORMANCE
+
+        mp_filter_image(filter_ID);
+
         end = clock();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
         printf("Time used on filtering: %f sec\n",cpu_time_used);
-#endif
-    }
+
 
     /* transfering image from MP to LCD */
 
-#ifdef PERFORMANCE
     start = clock();
-#endif
 
-    ccd_reset_pointer();
+    w = mp_get_height();
+    h = mp_get_width();
+
+    mp_reset_pointer();
     lcd_reset_pointer();
 
+    lcd_set_width(w);
+    lcd_set_height(h);
+
     for (i = 0; i < w * h; i++) {
-        lcd_set_pixel(ccd_get_pixel());
+        lcd_set_pixel(mp_get_pixel());
     }
 
-    lcd_set_width(ccd_get_width());
-    lcd_set_height(ccd_get_height());
 
-#ifdef PERFORMANCE
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Time used on transfering from CCD to LCD: %f sec\n",cpu_time_used);
-#endif
+    printf("Time used on transfering from MP to LCD: %f sec\n",cpu_time_used);
 
     /* compressing image if told and showing */
-#ifdef PERFORMANCE
     start = clock();
-#endif
+
     strcat(path_output, "display");
     strcat(path_output, ".bmp");
     if (compressed) lcd_show_image(path_output,TRUE);
     else lcd_show_image(path_output,FALSE);
 
-#ifdef PERFORMANCE
+
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     if (compressed)
         printf("Time used on showing the compressed image: %f sec\n",cpu_time_used);
     else
         printf("Time used on showing the uncompressed image: %f sec\n",cpu_time_used);
-#endif
 
 }
 
